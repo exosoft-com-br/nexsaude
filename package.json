@@ -6,7 +6,7 @@
     "ng":      "ng",
     "start":   "ng serve",
     "build":   "ng build --configuration production --base-href /",
-    "build:gh": "ng build --configuration production --base-href /",
+    "build:gh\": \"ng build --configuration production --base-href /nexsaude/\",
     "test":    "ng test",
     "lint":    "ng lint"
   },

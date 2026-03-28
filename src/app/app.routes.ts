@@ -66,12 +66,6 @@ export const routes: Routes = [
     ],
   },
   {
-    path: 'pix',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/pix/pix.component').then(m => m.PixComponent),
-  },
-  {
     path: '**',
     redirectTo: 'dashboard',
   },
