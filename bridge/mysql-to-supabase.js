@@ -88,7 +88,7 @@ async function getOperadorasMap() {
 
 // ----------------------------------------------------------------
 // Upsert em lotes no Supabase
--- ----------------------------------------------------------------
+// ----------------------------------------------------------------
 async function upsertBatch(rows) {
   const { error } = await supabase
     .schema('saas_saude')
@@ -103,7 +103,7 @@ async function upsertBatch(rows) {
 
 // ----------------------------------------------------------------
 // Sync de uma tabela MySQL de preços
--- ----------------------------------------------------------------
+// ----------------------------------------------------------------
 async function syncOperadora(conn, mysqlTable, operadoraId, since) {
   const whereClause = since
     ? `WHERE updated_at >= '${since.toISOString().slice(0, 19).replace('T', ' ')}'`
@@ -127,8 +127,8 @@ async function syncOperadora(conn, mysqlTable, operadoraId, since) {
 
 // ----------------------------------------------------------------
 // Mapeamento: nome da operadora → tabela MySQL correspondente
--- (ajuste conforme sua estrutura real no MySQL)
--- ----------------------------------------------------------------
+// (ajuste conforme sua estrutura real no MySQL)
+// ----------------------------------------------------------------
 const OPERADORA_TABLE_MAP = {
   'bradesco saúde':       'planos_bradesco',
   'sulamerica':           'planos_sulamerica',
