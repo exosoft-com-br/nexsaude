@@ -48,11 +48,11 @@ jobs:
             src/environments/environment.prod.ts
 
       - name: Build (production)
-        run: npm run build:gh
+        run: npx ng build --configuration production --base-href /
 
       # GitHub Pages com custom domain requer CNAME na raiz do dist
       - name: Create CNAME for custom domain
-        run: echo "exosoft.com.br" > dist/exosoft-saude/browser/CNAME
+        run: echo "app.nexsaude.exosoft.com.br" > dist/exosoft-saude/browser/CNAME
 
       # SPA fallback: duplicar index.html como 404.html
       # (GitHub Pages retorna 404 em rotas diretas; isso força o redirect)
@@ -89,6 +89,7 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
+    environment: github-pages
 
     steps:
       - name: Checkout
@@ -105,14 +106,20 @@ jobs:
         working-directory: bridge
         run: npm ci
 
+      - name: Check secrets
+        run: |
+          echo "SUPABASE_URL set: ${{ secrets.SUPABASE_URL != '' }}"
+          echo "MYSQL_HOST set: ${{ secrets.MYSQL_HOST != '' }}"
+
       - name: Run incremental sync
         working-directory: bridge
         env:
-          MYSQL_HOST:              ${{ secrets.MYSQL_HOST }}
-          MYSQL_PORT:              ${{ secrets.MYSQL_PORT }}
-          MYSQL_USER:              ${{ secrets.MYSQL_USER }}
-          MYSQL_PASSWORD:          ${{ secrets.MYSQL_PASSWORD }}
-          MYSQL_DATABASE:          ${{ secrets.MYSQL_DATABASE }}
-          SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
+          MYSQL_HOST:                ${{ secrets.MYSQL_HOST }}
+          MYSQL_PORT:                ${{ secrets.MYSQL_PORT }}
+          MYSQL_USER:                ${{ secrets.MYSQL_USER }}
+          MYSQL_PASSWORD:            ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_DATABASE:            ${{ secrets.MYSQL_DATABASE }}
+          MYSQL_SSL:                 "false"
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node mysql-to-supabase.js
