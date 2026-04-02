@@ -74,7 +74,8 @@ export class GoogleMapsService {
   buscarPorTexto(
     query: string,
     latitude?: number,
-    longitude?: number
+    longitude?: number,
+    raioMetros = 5000
   ): Observable<PlaceResult[]> {
     return new Observable<PlaceResult[]>(observer => {
       this.loadMapsApi().then(() => {
@@ -86,7 +87,7 @@ export class GoogleMapsService {
           location: latitude && longitude
             ? new google.maps.LatLng(latitude, longitude)
             : undefined,
-          radius: latitude ? 5000 : undefined,
+          radius: latitude ? raioMetros : undefined,
         };
 
         service.textSearch(request, (results, status) => {
@@ -149,7 +150,7 @@ export class GoogleMapsService {
       navigator.geolocation.getCurrentPosition(
         pos  => this.zone.run(() => { observer.next(pos.coords); observer.complete(); }),
         err  => this.zone.run(() => observer.error(err)),
-        { enableHighAccuracy: true, timeout: 10000 }
+        { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
       );
     });
   }

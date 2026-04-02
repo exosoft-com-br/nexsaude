@@ -145,7 +145,13 @@ export class SupabaseService {
     ).pipe(
       map(({ data, error }) => {
         if (error) throw error;
-        return data as ResultadoComparativo[];
+        const rows = (data ?? []) as any[];
+        return rows.map(r => ({
+          ...r,
+          detalhamento: typeof r.detalhamento === 'string'
+            ? JSON.parse(r.detalhamento)
+            : (r.detalhamento ?? []),
+        })) as ResultadoComparativo[];
       })
     );
   }
@@ -188,7 +194,8 @@ export class SupabaseService {
   // Planos / Tabelas de Preço
   // ----------------------------------------------------------------
 
-  /** Listar planos ativos com nome da operadora */
+  /** Listar planos ativos com nome da operadora.
+   *  Converte campos NUMERIC(10,2) de string → number (PostgREST retorna NUMERIC como string JSON). */
   listarPlanos(operadoraId?: string) {
     let query = this.supabase
       .schema('saas_saude')
@@ -204,7 +211,19 @@ export class SupabaseService {
     return from(query).pipe(
       map(({ data, error }) => {
         if (error) throw error;
-        return data;
+        return (data ?? []).map((p: any) => ({
+          ...p,
+          faixa_00_18:   parseFloat(p.faixa_00_18)   || 0,
+          faixa_19_23:   parseFloat(p.faixa_19_23)   || 0,
+          faixa_24_28:   parseFloat(p.faixa_24_28)   || 0,
+          faixa_29_33:   parseFloat(p.faixa_29_33)   || 0,
+          faixa_34_38:   parseFloat(p.faixa_34_38)   || 0,
+          faixa_39_43:   parseFloat(p.faixa_39_43)   || 0,
+          faixa_44_48:   parseFloat(p.faixa_44_48)   || 0,
+          faixa_49_53:   parseFloat(p.faixa_49_53)   || 0,
+          faixa_54_58:   parseFloat(p.faixa_54_58)   || 0,
+          faixa_59_mais: parseFloat(p.faixa_59_mais) || 0,
+        }));
       })
     );
   }

@@ -5,6 +5,14 @@ import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import type { EmpresaLead, CnaeItem, Socio, EnderecoCnpj } from '../models/lead.model';
 
+export interface CnpjSugestao {
+  cnpj:         string;
+  razao_social: string;
+  municipio:    string;
+  uf:           string;
+  situacao:     string;
+}
+
 /** Resposta bruta da BrasilAPI para CNPJ */
 interface BrasilApiCnpjResponse {
   cnpj:                         string;
@@ -83,6 +91,39 @@ export class BrasilApiService {
       calc(c, 13) === parseInt(c[12]) &&
       calc(c, 14) === parseInt(c[13])
     );
+  }
+
+  // ----------------------------------------------------------------
+  // Buscar empresas por nome (ReceitaWS)
+  // ----------------------------------------------------------------
+  buscarCnpjPorNome(nome: string): Observable<CnpjSugestao[]> {
+    const query = encodeURIComponent(nome.trim());
+    return this.http
+      .get<any>(`https://receitaws.com.br/v1/cnpj/search?query=${query}`)
+      .pipe(
+        map(res => (res.empresas ?? res ?? []).slice(0, 5).map((e: any) => ({
+          cnpj:         e.cnpj,
+          razao_social: e.nome ?? e.razao_social,
+          municipio:    e.municipio ?? '',
+          uf:           e.uf ?? '',
+          situacao:     e.situacao ?? '',
+        }))),
+        catchError(() => {
+          // fallback: BrasilAPI search
+          return this.http
+            .get<any>(`${this.baseUrl}/cnpj/v1/search?q=${query}`)
+            .pipe(
+              map(res => (res ?? []).slice(0, 5).map((e: any) => ({
+                cnpj:         e.cnpj,
+                razao_social: e.razao_social ?? e.nome,
+                municipio:    e.municipio ?? '',
+                uf:           e.uf ?? '',
+                situacao:     e.situacao ?? '',
+              }))),
+              catchError(() => throwError(() => new Error('Busca automática indisponível. Digite o CNPJ manualmente.')))
+            );
+        })
+      );
   }
 
   /** Formatar CNPJ para exibição: 00.000.000/0000-00 */

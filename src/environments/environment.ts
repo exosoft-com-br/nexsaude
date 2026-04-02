@@ -1,11 +1,11 @@
 export const environment = {
   production: false,
   supabase: {
-    url:    'https://SEU_PROJECT_ID.supabase.co',
-    anonKey: 'SUA_ANON_KEY',
+    url:     'https://bhargdkruycbrcanfvuz.supabase.co',
+    anonKey: 'sb_publishable_ROUFdAxC5BtCpMCr9oEzMw_zYukMCwX',
   },
   googleMaps: {
-    apiKey: 'SUA_GOOGLE_MAPS_API_KEY',
+    apiKey: 'AIzaSyBehfCaM6QYcqWCg6rv8BXhzLqBnKWshO4',
   },
   brasilApi: {
     baseUrl: 'https://brasilapi.com.br/api',

@@ -17,7 +17,7 @@ import { SupabaseService } from './core/services/supabase.service';
 
             <!-- Logo -->
             <a routerLink="/dashboard" class="flex items-center gap-2">
-              <span class="text-xl font-bold text-blue-600">ExoSoft</span>
+              <span class="text-xl font-bold text-blue-600">Next</span>
               <span class="text-xl font-light text-gray-600">Saúde</span>
             </a>
 
@@ -37,6 +37,11 @@ import { SupabaseService } from './core/services/supabase.service';
                  routerLinkActive="text-blue-600 font-semibold"
                  class="text-gray-600 hover:text-blue-600 transition-colors text-sm">
                 Buscar Empresas
+              </a>
+              <a routerLink="/planos"
+                 routerLinkActive="text-blue-600 font-semibold"
+                 class="text-gray-600 hover:text-blue-600 transition-colors text-sm">
+                Convênios
               </a>
               <a routerLink="/cotacao/simulador"
                  routerLinkActive="text-blue-600 font-semibold"

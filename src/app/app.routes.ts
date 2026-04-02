@@ -66,6 +66,12 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'planos',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/planos/tabela-planos/tabela-planos.component').then(m => m.TabelaPlanosComponent),
+  },
+  {
     path: '**',
     redirectTo: 'dashboard',
   },

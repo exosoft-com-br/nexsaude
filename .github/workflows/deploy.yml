@@ -52,7 +52,7 @@ jobs:
 
       # GitHub Pages com custom domain requer CNAME na raiz do dist
       - name: Create CNAME for custom domain
-        run: echo "app.nexsaude.exosoft.com.br" > dist/exosoft-saude/browser/CNAME
+        run: echo "app.nextsaude.exosoft.com.br" > dist/exosoft-saude/browser/CNAME
 
       # SPA fallback: duplicar index.html como 404.html
       # (GitHub Pages retorna 404 em rotas diretas; isso força o redirect)

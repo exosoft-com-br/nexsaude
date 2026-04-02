@@ -61,23 +61,33 @@ import type { TabelaPreco, ResultadoComparativo, CotacaoRealizada } from '../../
             </button>
           </div>
 
-          <!-- Seleção de planos -->
+          <!-- Seleção de planos agrupados por operadora -->
           <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
             <h3 class="text-sm font-semibold text-gray-700 mb-3">Planos para Comparar</h3>
 
-            <div *ngFor="let plano of planosDisponiveis" class="flex items-start gap-2 mb-2">
-              <input
-                type="checkbox"
-                [id]="'plano-' + plano.id"
-                [value]="plano.id"
-                (change)="togglePlano(plano.id, $event)"
-                class="mt-1 accent-blue-600"
-              />
-              <label [for]="'plano-' + plano.id" class="text-sm text-gray-700 cursor-pointer leading-tight">
-                <span class="font-medium">{{ plano['operadoras']?.nome ?? 'Operadora' }}</span>
-                <br/>
-                <span class="text-gray-400 text-xs">{{ plano.nome_plano }}</span>
-              </label>
+            <div *ngFor="let op of operadorasComPlanos" class="mb-4">
+              <!-- Header da operadora com checkbox "selecionar todos" -->
+              <div class="flex items-center justify-between mb-1.5">
+                <p class="text-xs font-bold text-gray-600 uppercase tracking-wide">{{ op.nome }}</p>
+                <button
+                  (click)="toggleOperadora(op)"
+                  class="text-xs text-blue-500 hover:text-blue-700">
+                  {{ todosPlanosSelecionados(op) ? 'Desmarcar' : 'Todos' }}
+                </button>
+              </div>
+              <!-- Planos da operadora -->
+              <div *ngFor="let plano of op.planos" class="flex items-center gap-2 mb-1.5 pl-2">
+                <input
+                  type="checkbox"
+                  [id]="'plano-' + plano.id"
+                  [checked]="planosSelecionados.includes(plano.id)"
+                  (change)="togglePlano(plano.id, $event)"
+                  class="accent-blue-600"
+                />
+                <label [for]="'plano-' + plano.id" class="text-xs text-gray-700 cursor-pointer leading-snug">
+                  {{ plano.nome_plano }}
+                </label>
+              </div>
             </div>
 
             <p *ngIf="planosDisponiveis.length === 0" class="text-gray-400 text-xs">
@@ -94,6 +104,7 @@ import type { TabelaPreco, ResultadoComparativo, CotacaoRealizada } from '../../
           </button>
 
           <p *ngIf="erro" class="text-red-600 text-sm">{{ erro }}</p>
+
 
         </div>
 
@@ -137,31 +148,31 @@ import type { TabelaPreco, ResultadoComparativo, CotacaoRealizada } from '../../
 
                 <div class="text-right">
                   <p class="text-2xl font-bold text-gray-900">
-                    {{ r.valor_total | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                    {{ r.valor_total | currency:'BRL':'symbol':'1.2-2' }}
                   </p>
-                  <p class="text-xs text-gray-400">/mês · per capita: {{ r.valor_per_capita | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
+                  <p class="text-xs text-gray-400">/mês · per capita: {{ r.valor_per_capita | currency:'BRL':'symbol':'1.2-2' }}</p>
                 </div>
               </div>
 
               <!-- Detalhamento por faixa -->
               <details class="mt-2">
                 <summary class="text-xs text-blue-600 cursor-pointer hover:text-blue-800">
-                  Ver detalhamento por beneficiário
+                  Ver detalhamento por beneficiário ({{ r.detalhamento.length }} pessoa(s))
                 </summary>
                 <table class="w-full mt-2 text-xs">
                   <thead>
                     <tr class="text-gray-400 border-b">
                       <th class="text-left py-1">Idade</th>
                       <th class="text-left py-1">Faixa ANS</th>
-                      <th class="text-right py-1">Valor</th>
+                      <th class="text-right py-1">Valor/mês</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr *ngFor="let d of r.detalhamento" class="border-b border-gray-50">
                       <td class="py-1">{{ d.idade }} anos</td>
-                      <td class="py-1 text-gray-500">{{ d.faixa | titlecase }}</td>
+                      <td class="py-1 text-gray-500">{{ formatarFaixa(d.faixa) }}</td>
                       <td class="py-1 text-right font-medium">
-                        {{ d.valor_mensal | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                        {{ d.valor_mensal | currency:'BRL':'symbol':'1.2-2' }}
                       </td>
                     </tr>
                   </tbody>
@@ -236,34 +247,111 @@ export class SimuladorComponent implements OnInit {
   adicionarIdade():     void { this.idades.push(0); }
   removerIdade(i: number): void { this.idades.splice(i, 1); }
 
+
+  get operadorasComPlanos(): { nome: string; planos: any[] }[] {
+    const mapa = new Map<string, { nome: string; planos: any[] }>();
+    for (const p of this.planosDisponiveis) {
+      const nomeOp = p['operadoras']?.nome ?? 'Outros';
+      if (!mapa.has(nomeOp)) mapa.set(nomeOp, { nome: nomeOp, planos: [] });
+      mapa.get(nomeOp)!.planos.push(p);
+    }
+    return [...mapa.values()].sort((a, b) => a.nome.localeCompare(b.nome));
+  }
+
+  todosPlanosSelecionados(op: { planos: any[] }): boolean {
+    return op.planos.every(p => this.planosSelecionados.includes(p.id));
+  }
+
+  toggleOperadora(op: { planos: any[] }): void {
+    if (this.todosPlanosSelecionados(op)) {
+      this.planosSelecionados = this.planosSelecionados.filter(
+        id => !op.planos.some(p => p.id === id)
+      );
+    } else {
+      op.planos.forEach(p => {
+        if (!this.planosSelecionados.includes(p.id)) this.planosSelecionados.push(p.id);
+      });
+    }
+  }
+
   togglePlano(id: string, event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
     if (checked) {
-      this.planosSelecionados.push(id);
+      if (!this.planosSelecionados.includes(id)) this.planosSelecionados.push(id);
     } else {
       this.planosSelecionados = this.planosSelecionados.filter(p => p !== id);
     }
   }
 
+  private readonly FAIXAS: Record<string, string> = {
+    faixa_00_18:  '0–18 anos',
+    faixa_19_23:  '19–23 anos',
+    faixa_24_28:  '24–28 anos',
+    faixa_29_33:  '29–33 anos',
+    faixa_34_38:  '34–38 anos',
+    faixa_39_43:  '39–43 anos',
+    faixa_44_48:  '44–48 anos',
+    faixa_49_53:  '49–53 anos',
+    faixa_54_58:  '54–58 anos',
+    faixa_59_mais: '59+ anos',
+  };
+
+  formatarFaixa(faixa: string): string {
+    return this.FAIXAS[faixa] ?? faixa;
+  }
+
   simular(): void {
-    const idadesValidas = this.idades.filter(i => i > 0);
+    const idadesValidas = this.idades.map(Number).filter(i => i > 0);
     if (!idadesValidas.length || !this.planosSelecionados.length) return;
 
     this.simulando = true;
     this.erro = null;
+    this.cotacao.idades_beneficiarios = idadesValidas;
+    this.cotacao.planos_cotados       = this.planosSelecionados;
 
-    this.cotacaoSvc.calcularComparativo(this.planosSelecionados, idadesValidas).subscribe({
-      next: res => {
-        this.resultados = res;
-        this.simulando  = false;
-        this.cotacao.idades_beneficiarios = idadesValidas;
-        this.cotacao.planos_cotados       = this.planosSelecionados;
-      },
-      error: err => {
-        this.erro     = err.message;
-        this.simulando = false;
-      },
-    });
+    // Calcular comparativo client-side com os dados já carregados
+    const planosSel = this.planosDisponiveis.filter(p => this.planosSelecionados.includes(p.id));
+    if (!planosSel.length) {
+      this.erro = 'Selecione ao menos um plano antes de simular.';
+      this.simulando = false;
+      return;
+    }
+
+    const resultados: ResultadoComparativo[] = planosSel.map(plano => {
+      const detalhamento = idadesValidas.map(idade => {
+        const faixa        = this.calcularFaixa(idade);
+        const valor_mensal = Math.round(Number(plano[faixa] ?? 0) * 100) / 100;
+        return { idade, faixa, valor_mensal };
+      });
+      const valor_total = Math.round(detalhamento.reduce((s, d) => s + d.valor_mensal, 0) * 100) / 100;
+      return {
+        ranking:          0,
+        plano_id:         plano.id,
+        nome_plano:       plano.nome_plano,
+        operadora:        plano['operadoras']?.nome ?? '',
+        valor_total,
+        valor_per_capita: Math.round(valor_total / idadesValidas.length * 100) / 100,
+        detalhamento,
+      };
+    })
+    .sort((a, b) => a.valor_total - b.valor_total)
+    .map((r, i) => ({ ...r, ranking: i + 1 }));
+
+    this.resultados = resultados;
+    this.simulando  = false;
+  }
+
+  private calcularFaixa(idade: number): string {
+    if (idade <= 18) return 'faixa_00_18';
+    if (idade <= 23) return 'faixa_19_23';
+    if (idade <= 28) return 'faixa_24_28';
+    if (idade <= 33) return 'faixa_29_33';
+    if (idade <= 38) return 'faixa_34_38';
+    if (idade <= 43) return 'faixa_39_43';
+    if (idade <= 48) return 'faixa_44_48';
+    if (idade <= 53) return 'faixa_49_53';
+    if (idade <= 58) return 'faixa_54_58';
+    return 'faixa_59_mais';
   }
 
   exportarPdf(): void {

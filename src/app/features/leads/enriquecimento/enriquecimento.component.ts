@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BrasilApiService } from '../../../core/services/brasil-api.service';
+import { BrasilApiService, CnpjSugestao } from '../../../core/services/brasil-api.service';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import type { EmpresaLead } from '../../../core/models/lead.model';
 
@@ -36,6 +36,30 @@ import type { EmpresaLead } from '../../../core/models/lead.model';
         <!-- Card: Consulta CNPJ -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Enriquecimento via CNPJ</h2>
+
+          <!-- Busca automática por nome -->
+          <button
+            (click)="buscarAutomatico()"
+            [disabled]="buscandoAuto"
+            class="w-full mb-3 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
+            {{ buscandoAuto ? 'Buscando...' : '⚡ Enriquecer Automaticamente' }}
+          </button>
+
+          <!-- Sugestões de CNPJ -->
+          <div *ngIf="sugestoes.length > 0" class="mb-4 border border-gray-200 rounded-lg overflow-hidden">
+            <p class="text-xs text-gray-500 px-3 py-2 bg-gray-50 border-b">Selecione a empresa correta:</p>
+            <div
+              *ngFor="let s of sugestoes"
+              (click)="selecionarSugestao(s)"
+              class="px-3 py-2.5 hover:bg-blue-50 cursor-pointer border-b last:border-0 transition-colors">
+              <p class="text-sm font-medium text-gray-800">{{ s.razao_social }}</p>
+              <p class="text-xs text-gray-400">{{ s.cnpj }} — {{ s.municipio }}/{{ s.uf }}
+                <span class="ml-1" [class.text-green-600]="s.situacao === 'ATIVA'" [class.text-red-500]="s.situacao !== 'ATIVA'">
+                  {{ s.situacao }}
+                </span>
+              </p>
+            </div>
+          </div>
 
           <div class="flex gap-3">
             <input
@@ -83,7 +107,7 @@ import type { EmpresaLead } from '../../../core/models/lead.model';
               <div>
                 <p class="text-gray-400 text-xs">Capital Social</p>
                 <p class="font-medium text-gray-800">
-                  {{ dadosCnpj.capital_social | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                  {{ dadosCnpj.capital_social | currency:'BRL':'symbol':'1.2-2' }}
                 </p>
               </div>
               <div>
@@ -173,7 +197,9 @@ export class EnriquecimentoComponent implements OnInit {
   dadosCnpj: Partial<EmpresaLead> | null = null;
 
   carregandoCnpj = false;
+  buscandoAuto   = false;
   salvando       = false;
+  sugestoes: CnpjSugestao[] = [];
 
   erroCnpj:      string | null = null;
   erroSalvar:    string | null = null;
@@ -206,6 +232,50 @@ export class EnriquecimentoComponent implements OnInit {
       },
       error: err => this.erroCarregar = err.message,
     });
+  }
+
+  buscarAutomatico(): void {
+    if (!this.lead?.nome_empresa) return;
+    this.buscandoAuto = true;
+    this.erroCnpj     = null;
+    this.sugestoes    = [];
+
+    // Usa nome fantasia + cidade extraída do endereço para melhorar precisão
+    const cidade = this.extrairCidade(this.lead.endereco_formatado ?? '');
+    const query  = cidade ? `${this.lead.nome_empresa} ${cidade}` : this.lead.nome_empresa;
+
+    this.brasil.buscarCnpjPorNome(query).subscribe({
+      next: sugestoes => {
+        this.buscandoAuto = false;
+        if (sugestoes.length === 1) {
+          this.selecionarSugestao(sugestoes[0]);
+        } else if (sugestoes.length > 1) {
+          this.sugestoes = sugestoes;
+        } else {
+          this.erroCnpj = 'Nenhuma empresa encontrada. Digite o CNPJ manualmente.';
+        }
+      },
+      error: err => {
+        this.buscandoAuto = false;
+        this.erroCnpj     = err.message;
+      },
+    });
+  }
+
+  private extrairCidade(endereco: string): string {
+    // Endereço do Maps vem como "Rua X, 123 - Bairro, Cidade - UF, 00000-000"
+    const partes = endereco.split(',');
+    if (partes.length >= 2) {
+      const parte = partes[partes.length - 2].trim().split('-');
+      return parte[0].trim();
+    }
+    return '';
+  }
+
+  selecionarSugestao(s: CnpjSugestao): void {
+    this.sugestoes    = [];
+    this.cnpjInput    = this.brasil.formatarCnpj(s.cnpj);
+    this.consultarCnpj();
   }
 
   consultarCnpj(): void {
