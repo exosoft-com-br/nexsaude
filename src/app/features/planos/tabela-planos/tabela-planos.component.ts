@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { SupabaseService } from '../../../core/services/supabase.service';
 
 interface PlanoRow {
@@ -31,7 +32,7 @@ interface GrupoOperadora {
 @Component({
   selector: 'app-tabela-planos',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyPipe],
+  imports: [CommonModule, FormsModule, CurrencyPipe, RouterLink],
   template: `
     <div class="max-w-full mx-auto px-4 py-8">
 
@@ -42,6 +43,17 @@ interface GrupoOperadora {
           <p class="text-gray-500 mt-1">Preços por faixa etária — {{ totalPlanos }} planos de {{ grupos.length }} operadoras</p>
         </div>
 
+        <div class="flex gap-3 items-center flex-wrap">
+          <!-- Botão adicionar -->
+          <a routerLink="/planos/importar"
+             class="inline-flex items-center gap-2 bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            + Adicionar Plano
+          </a>
+        </div>
+      </div>
+
+      <!-- Filtros separados -->
+      <div class="mb-4 flex gap-3 flex-wrap">
         <!-- Filtro operadora -->
         <div class="flex gap-3 flex-wrap">
           <select [(ngModel)]="filtroOperadora"

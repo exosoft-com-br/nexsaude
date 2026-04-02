@@ -228,6 +228,44 @@ export class SupabaseService {
     );
   }
 
+  /** Listar operadoras ativas */
+  listarOperadoras() {
+    return from(
+      this.supabase
+        .schema('saas_saude')
+        .from('operadoras')
+        .select('id, nome')
+        .eq('ativo', true)
+        .order('nome')
+    ).pipe(
+      map(({ data, error }) => {
+        if (error) throw error;
+        return (data ?? []) as { id: string; nome: string }[];
+      })
+    );
+  }
+
+  /** Criar nova operadora, retorna o id gerado */
+  async criarOperadora(nome: string): Promise<string> {
+    const { data, error } = await this.supabase
+      .schema('saas_saude')
+      .from('operadoras')
+      .insert({ nome, ativo: true })
+      .select('id')
+      .single();
+    if (error) throw error;
+    return (data as any).id as string;
+  }
+
+  /** Inserir ou atualizar plano em tabelas_precos */
+  async upsertPlano(plano: Record<string, any>): Promise<void> {
+    const { error } = await this.supabase
+      .schema('saas_saude')
+      .from('tabelas_precos')
+      .upsert(plano, { onConflict: 'operadora_id,codigo_plano,vigencia_inicio' });
+    if (error) throw error;
+  }
+
   // ----------------------------------------------------------------
   // Dashboard stats
   // ----------------------------------------------------------------

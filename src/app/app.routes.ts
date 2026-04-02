@@ -68,8 +68,18 @@ export const routes: Routes = [
   {
     path: 'planos',
     canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/planos/tabela-planos/tabela-planos.component').then(m => m.TabelaPlanosComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/planos/tabela-planos/tabela-planos.component').then(m => m.TabelaPlanosComponent),
+      },
+      {
+        path: 'importar',
+        loadComponent: () =>
+          import('./features/planos/importar-plano/importar-plano.component').then(m => m.ImportarPlanoComponent),
+      },
+    ],
   },
   {
     path: '**',
