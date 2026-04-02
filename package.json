@@ -6,7 +6,6 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build --configuration production --base-href /",
-    "build:gh": "ng build --configuration production --base-href /nexsaude/",
     "test": "ng test",
     "lint": "ng lint"
   },
@@ -22,10 +21,8 @@
     "@angular/platform-browser-dynamic": "^17.3.0",
     "@angular/router": "^17.3.0",
     "@supabase/supabase-js": "^2.100.1",
-    "dotenv": "^17.3.1",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
-    "mysql2": "^3.20.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.6.0",
     "zone.js": "~0.14.0"
