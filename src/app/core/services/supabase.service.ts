@@ -257,13 +257,27 @@ export class SupabaseService {
     return (data as any).id as string;
   }
 
-  /** Inserir ou atualizar plano em tabelas_precos */
+  /** Inserir ou atualizar plano em tabelas_precos (vinculado ao corretor autenticado) */
   async upsertPlano(plano: Record<string, any>): Promise<void> {
     const { error } = await this.supabase
       .schema('saas_saude')
       .from('tabelas_precos')
-      .upsert(plano, { onConflict: 'operadora_id,codigo_plano,vigencia_inicio' });
+      .upsert(
+        { ...plano, corretor_id: this.currentUser?.id },
+        { onConflict: 'idx_tabelas_precos_unique' }
+      );
     if (error) throw error;
+  }
+
+  /** Deletar plano do corretor */
+  deletarPlano(id: string) {
+    return from(
+      this.supabase
+        .schema('saas_saude')
+        .from('tabelas_precos')
+        .delete()
+        .eq('id', id)
+    ).pipe(map(({ error }) => { if (error) throw error; }));
   }
 
   // ----------------------------------------------------------------

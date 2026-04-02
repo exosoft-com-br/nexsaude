@@ -12,6 +12,7 @@ interface PlanoRow {
   acomodacao:    string;
   tipo_contratacao: string;
   operadora:     string;
+  corretor_id:   string | null;
   faixa_00_18:   number;
   faixa_19_23:   number;
   faixa_24_28:   number;
@@ -108,6 +109,7 @@ interface GrupoOperadora {
                 <th class="text-right px-3 py-3 font-semibold text-blue-700 whitespace-nowrap">49–53</th>
                 <th class="text-right px-3 py-3 font-semibold text-blue-700 whitespace-nowrap">54–58</th>
                 <th class="text-right px-3 py-3 font-semibold text-orange-600 whitespace-nowrap">59+</th>
+                <th class="w-8 px-2 py-3"></th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-50">
@@ -116,7 +118,13 @@ interface GrupoOperadora {
                   class="hover:bg-blue-50 transition-colors">
                 <td class="px-4 py-3 sticky left-0 z-10 font-medium text-gray-900"
                     [class.bg-white]="even" [class.bg-gray-50]="!even">
-                  {{ p.nome_plano }}
+                  <div class="flex items-center gap-2">
+                    {{ p.nome_plano }}
+                    <span *ngIf="!p.corretor_id"
+                          class="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">público</span>
+                    <span *ngIf="p.corretor_id"
+                          class="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">meu preço</span>
+                  </div>
                 </td>
                 <td class="px-3 py-3 text-gray-500 whitespace-nowrap">{{ p.cobertura }}</td>
                 <td class="px-3 py-3 text-gray-500 whitespace-nowrap">{{ p.acomodacao }}</td>
@@ -130,6 +138,12 @@ interface GrupoOperadora {
                 <td class="px-3 py-3 text-right text-gray-800">{{ p.faixa_49_53  | currency:'BRL':'symbol':'1.2-2' }}</td>
                 <td class="px-3 py-3 text-right text-gray-800">{{ p.faixa_54_58  | currency:'BRL':'symbol':'1.2-2' }}</td>
                 <td class="px-3 py-3 text-right font-semibold text-orange-700">{{ p.faixa_59_mais | currency:'BRL':'symbol':'1.2-2' }}</td>
+                <td class="px-2 py-3 text-center">
+                  <button *ngIf="p.corretor_id"
+                          (click)="deletar(p.id)"
+                          title="Remover meu preço"
+                          class="text-gray-300 hover:text-red-500 transition-colors text-xs">✕</button>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -170,6 +184,7 @@ export class TabelaPlanosComponent implements OnInit {
             acomodacao:       p.acomodacao,
             tipo_contratacao: p.tipo_contratacao,
             operadora:        op,
+            corretor_id:      p.corretor_id ?? null,
             faixa_00_18:   Number(p.faixa_00_18  ?? 0),
             faixa_19_23:   Number(p.faixa_19_23  ?? 0),
             faixa_24_28:   Number(p.faixa_24_28  ?? 0),
@@ -204,6 +219,17 @@ export class TabelaPlanosComponent implements OnInit {
         ),
       }))
       .filter(g => g.planos.length > 0);
+  }
+
+  deletar(id: string): void {
+    if (!confirm('Remover este plano da sua tabela?')) return;
+    this.supa.deletarPlano(id).subscribe({
+      next: () => {
+        this.grupos = this.grupos
+          .map(g => ({ ...g, planos: g.planos.filter(p => p.id !== id) }))
+          .filter(g => g.planos.length > 0);
+      },
+    });
   }
 
   get totalPlanos(): number {
